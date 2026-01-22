@@ -7,8 +7,8 @@ try:
     from pgzero.actor import Actor
     from pgzero.loaders import sounds
     from pgzero.loaders import music
-    from pgzero.keyboard import Keyboard
-    from pgzero.screen import Screen
+    from pgzero.keyboard import keyboard
+    from pgzero.screen import screen 
 except ImportError:
     pass
 #from pgzero.actor import Actor
@@ -45,14 +45,14 @@ class Hero(AnimatedSprite):
         super().__init__("herromoviment", 4, pos)
         self.speed = 4
 
-    def update_movement(self, Keyboard):
-        if Keyboard.left and self.actor.left > 0:
+    def update_movement(self, keyboard):
+        if keyboard.left and self.actor.left > 0:
             self.actor.x -= self.speed
-        if Keyboard.right and self.actor.right < WIDTH:
+        if keyboard.right and self.actor.right < WIDTH:
             self.actor.x += self.speed
-        if Keyboard.up and self.actor.top > 0:
+        if keyboard.up and self.actor.top > 0:
             self.actor.y -= self.speed
-        if Keyboard.down and self.actor.bottom < HEIGHT:
+        if keyboard.down and self.actor.bottom < HEIGHT:
             self.actor.y += self.speed
         
         self.update_animation()
@@ -63,10 +63,11 @@ class Enemy(AnimatedSprite):
         self.start_x = pos[0]
         self.patrol_dist = patrol_dist
         self.direction = 1
-        self.speed = 2
-
-    def patrol(self):
-        self.actor.x += self.speed * self.direction
+        self.base_speed = 2 
+        
+    def patrol(self, extra_speed):
+        current_speed = self.base_speed + extra_speed
+        self.actor.x += current_speed * self.direction
         if abs(self.actor.x - self.start_x) >= self.patrol_dist:
             self.direction *= -1
         self.update_animation()
@@ -76,36 +77,46 @@ class Game:
         self.state = MENU
         self.audio_enabled = True
         self.hero = Hero((400, 300))
-        self.enemies = [Enemy((200, 150)), Enemy((600, 450))]
+        self.enemies = [Enemy((200, 150)), Enemy((600, 450)), Enemy((400, 100)), Enemy((700, 300))]
         
         self.btn_start = Rect((WIDTH//2 - 100, 220), (200, 50))
         self.btn_audio = Rect((WIDTH//2 - 100, 300), (200, 50))
         self.btn_exit = Rect((WIDTH//2 - 100, 380), (200, 50))
 
-        self.tile_size = 64
-        self.background_tiles = []
-        self.create_map()
+        self.background_tiles = "cenario_certo"
+
+        self.extra_speed = 0 
+        self.frame_count = 0 
+
 
     def create_map(self):
         self.background_tiles = []
         for y in range(0, HEIGHT, self.tile_size):
             row = []
             for x in range(0, WIDTH, self.tile_size):
-                row.append(f"cenario ({random.randint(214, 225)})")
+                if random.random() < 0.1:
+                    title_num = 214
+                else : 
+                    title_num = random.randint(1, 234)
+                row.append(f"cenario ({title_num})")
+                #row.append(f"cenario ({random.randint(1, 234)})")
             self.background_tiles.append(row)
 
     def toggle_audio(self):
         self.audio_enabled = not self.audio_enabled
         if self.audio_enabled:
-            music.play("puzzle-dance_-_fowksprod_wav")
+            music.play("puzzle-dance-__fowksprod_.wav")
         else:
             music.stop()
 
-    def update(self, Keyboard):
+    def update(self, keyboard):
         if self.state == PLAYING:
-            self.hero.update_movement(Keyboard)
+            self.frame_count += 1
+            if self.frame_count % 300 == 0:
+                self.extra_speed += 0.5
+            self.hero.update_movement(keyboard)
             for enemy in self.enemies:
-                enemy.patrol()
+                enemy.patrol(self.extra_speed)
                 if self.hero.actor.colliderect(enemy.actor):
                     if self.audio_enabled:
                         sounds.explosion_a.play()
@@ -114,19 +125,18 @@ class Game:
     def draw(self, screen):
         screen.clear()
         
-        for r_idx, row in enumerate(self.background_tiles):
-            for c_idx, tile in enumerate(row):
-                screen.blit(tile, (c_idx * self.tile_size, r_idx * self.tile_size))
+        screen.blit (self.background_tiles, (0, 0))
 
-        if self.state == MENU:
+        if self.state == MENU : 
             self.draw_menu(screen)
         elif self.state == PLAYING:
             self.hero.draw()
             for enemy in self.enemies:
                 enemy.draw()
+            screen.draw.text(f"SPEED LEVEL: {int(self.extra_speed)}", topright=(WIDTH - 10, 10), fontsize=30, color="white")
         elif self.state == GAME_OVER:
-            screen.draw.text("GAME OVER", center=(WIDTH//2, 250), fontsize=80, color='red')
-            screen.draw.text("Click to Return Menu", center=(WIDTH//2, 350), fontsize=40, color='white')
+            screen.draw.text("GAME OVER", center=(WIDTH//2, HEIGHT//2), fontsize=100, color="red")
+            screen.draw.text("CLICK TO RESTART", center=(WIDTH//2, HEIGHT//2 + 100), fontsize=50, color="white")
 
     def draw_menu(self, screen):
         screen.draw.text("HERO ZONE", center=(WIDTH//2, 120), fontsize=100, color="gold")
@@ -144,17 +154,17 @@ class Game:
 current_game = Game()
 
 def update():
-    current_game.update(Keyboard)
+    current_game.update(keyboard)
 
 def draw():
-    current_game.draw(Screen)
+    current_game.draw(screen)
 
 def on_mouse_down(pos):
     if current_game.state == MENU:
         if current_game.btn_start.collidepoint(pos):
             current_game.state = PLAYING
             if current_game.audio_enabled:
-                music.play("puzzle-dance_-_fowksprod_wav")
+                music.play("puzzle-dance-__fowksprod_.wav")
         elif current_game.btn_audio.collidepoint(pos):
             current_game.toggle_audio()
         elif current_game.btn_exit.collidepoint(pos):
