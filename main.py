@@ -18,11 +18,12 @@ except ImportError:
 
 WIDTH = 800
 HEIGHT = 600
-TITLE = "HERO ZONE: DESERT ADVENTURE"
+TITLE = "HERO ZONE: SPACE SURVIVE"
 
 MENU = 0
 PLAYING = 1
 GAME_OVER = 2
+WINS = 3 
 
 class AnimatedSprite:
     def __init__(self, prefix, frame_count, pos, animation_speed=0.1):
@@ -72,12 +73,34 @@ class Enemy(AnimatedSprite):
             self.direction *= -1
         self.update_animation()
 
+class EnemyType2(AnimatedSprite):
+    def __init__(self, pos, patrol_dist=120):
+        super().__init__("monstro", 4, pos)
+        self.start_y = pos[1]
+        self.patrol_dist = patrol_dist
+        self.direction = 1
+        self.base_speed = 2
+        
+    def patrol(self, extra_speed):
+        current_speed = self.base_speed + extra_speed
+        self.actor.y += current_speed * self.direction
+        if abs(self.actor.y - self.start_y) >= self.patrol_dist:
+            self.direction *= -1
+        self.update_animation()
+
 class Game:
     def __init__(self):
         self.state = MENU
         self.audio_enabled = True
         self.hero = Hero((400, 300))
-        self.enemies = [Enemy((200, 150)), Enemy((600, 450)), Enemy((400, 100)), Enemy((700, 300))]
+        self.enemies = []
+        for c in range(9) : 
+            enemy_x = random.randint(100, WIDTH - 100)
+            enemy_y = random.randint(100, HEIGHT - 100)
+            if c % 2 == 0:
+                self.enemies.append(Enemy((enemy_x, enemy_y)))
+            else:
+                self.enemies.append(EnemyType2((enemy_x, enemy_y)))
         
         self.btn_start = Rect((WIDTH//2 - 100, 220), (200, 50))
         self.btn_audio = Rect((WIDTH//2 - 100, 300), (200, 50))
@@ -114,6 +137,8 @@ class Game:
             self.frame_count += 1
             if self.frame_count % 300 == 0:
                 self.extra_speed += 0.5
+            if self.frame_count >= 7200 :
+                self.state = WINS 
             self.hero.update_movement(keyboard)
             for enemy in self.enemies:
                 enemy.patrol(self.extra_speed)
@@ -131,8 +156,14 @@ class Game:
             self.draw_menu(screen)
         elif self.state == PLAYING:
             self.hero.draw()
+            screen.draw.text("YOU", center=(self.hero.actor.x, self.hero.actor.y - 40), 
+                             fontsize=22, 
+                             color="gold",
+                             shadow=(1, 1))
             for enemy in self.enemies:
                 enemy.draw()
+            segundos = max(0, 120 - self.frame_count // 60)
+            screen.draw.text(f"TIME LEFT: {segundos}s", topleft=(10, 10), fontsize=30, color="white")
             screen.draw.text(f"SPEED LEVEL: {int(self.extra_speed)}", topright=(WIDTH - 10, 10), fontsize=30, color="white")
         elif self.state == GAME_OVER:
             screen.draw.text("GAME OVER", center=(WIDTH//2, HEIGHT//2), fontsize=100, color="red")
