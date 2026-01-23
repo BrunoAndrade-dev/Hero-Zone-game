@@ -1,6 +1,6 @@
-# Projeto de jogo feito para o teste da empresa Kodland
+# Projeto de jogo feito para um teste Empregatício
 
-### Aqui você verá como fiz para solucionar a situação que englobou O TESTE 1 da empresa Kodland, na qual estou  em processo de admissão para trabalhar como tutor de programação com Python e Scratch.
+### Aqui você verá como fiz para solucionar a situação que englobou O TESTE 1 de uma empresa de tecnologia, na qual estou  em processo de admissão para trabalhar.
 
 ## Regras do Jogo
 - Você é um héroi espacial que precisa utilizar sua super velocidade para desviar de inimigos
