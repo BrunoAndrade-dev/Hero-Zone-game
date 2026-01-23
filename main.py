@@ -69,8 +69,10 @@ class Enemy(AnimatedSprite):
     def patrol(self, extra_speed):
         current_speed = self.base_speed + extra_speed
         self.actor.x += current_speed * self.direction
-        if abs(self.actor.x - self.start_x) >= self.patrol_dist:
+        if self.actor.right >= WIDTH or self.actor.left <= 0:
             self.direction *= -1
+            if self.actor.left <= 0: self.actor.left = 0
+            if self.actor.right >= WIDTH: self.actor.right = WIDTH
         self.update_animation()
 
 class EnemyType2(AnimatedSprite):
@@ -84,10 +86,11 @@ class EnemyType2(AnimatedSprite):
     def patrol(self, extra_speed):
         current_speed = self.base_speed + extra_speed
         self.actor.y += current_speed * self.direction
-        if abs(self.actor.y - self.start_y) >= self.patrol_dist:
+        if self.actor.bottom >= HEIGHT or self.actor.top <= 0:
             self.direction *= -1
+            if self.actor.top <= 0: self.actor.top = 0
+            if self.actor.bottom >= HEIGHT: self.actor.bottom = HEIGHT
         self.update_animation()
-
 class Game:
     def __init__(self):
         self.state = MENU
@@ -169,6 +172,9 @@ class Game:
             screen.draw.text("GAME OVER", center=(WIDTH//2, HEIGHT//2), fontsize=100, color="red")
             screen.draw.text("CLICK TO RESTART", center=(WIDTH//2, HEIGHT//2 + 100), fontsize=50, color="white")
 
+        elif self.state == WINS:
+            screen.draw.text("YOU WIN!", center=(WIDTH//2, HEIGHT//2), fontsize=100, color="green")
+            screen.draw.text("CLICK TO RESTART", center=(WIDTH//2, HEIGHT//2 + 100), fontsize=50, color="white")
     def draw_menu(self, screen):
         screen.draw.text("HERO ZONE", center=(WIDTH//2, 120), fontsize=100, color="gold")
         
@@ -200,7 +206,7 @@ def on_mouse_down(pos):
             current_game.toggle_audio()
         elif current_game.btn_exit.collidepoint(pos):
             exit()
-    elif current_game.state == GAME_OVER:
+    elif current_game.state == GAME_OVER or current_game.state == WINS:
         current_game.__init__()
 
 pgzrun.go()
